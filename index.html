@@ -106,7 +106,7 @@
         <div class="relative z-10 max-w-7xl mx-auto p-4 md:p-6 lg:p-8">
             <!-- Header -->
             <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-                <div id="app-title" class="cursor-pointer">
+                <div id="app-title">
                     <h1 class="text-3xl md:text-4xl font-bold text-text-primary flex items-center gap-3">
                         <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-accent"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"></path></svg>
                         Smart Study Companion
@@ -256,6 +256,7 @@
                     adminConfig: 'smartStudyAdminConfig_v3'
                 },
                 ADMIN_PASSWORD: "CHANGE_ME", // IMPORTANT: CHANGE THIS PASSWORD!
+                ADMIN_TRIGGER_KEY: "admin_panel",
                 DEFAULT_ADMIN_CONFIG: {
                     tiers: [
                         { id: 'free', name: 'Free', maxFiles: 5, aiQueriesPerDay: 10 },
@@ -268,8 +269,6 @@
             let state = {};
             let adminConfig = {};
             let adminLoggedIn = false;
-            let adminClickCount = 0;
-            let adminClickTimer = null;
             
             const $ = (selector) => document.querySelector(selector);
             const $$ = (selector) => document.querySelectorAll(selector);
@@ -345,7 +344,6 @@
             // --- Event Listeners ---
             function bindEventListeners() {
                 $('#submit-access-key-btn').addEventListener('click', handleAccessKeySubmit);
-                $('#app-title').addEventListener('click', handleAdminTrigger);
                 $('#admin-login-btn').addEventListener('click', handleAdminLogin);
                 $('#theme-toggle').addEventListener('click', toggleTheme);
                 $('#help-btn').addEventListener('click', () => toggleModal(userManualModal, true));
@@ -402,7 +400,15 @@
             }
 
             function handleAccessKeySubmit() {
-                const key = $('#access-key-input').value.trim();
+                const keyInput = $('#access-key-input');
+                const key = keyInput.value.trim();
+
+                if (key === APP_CONFIG.ADMIN_TRIGGER_KEY) {
+                    keyInput.value = '';
+                    handleAdminTrigger();
+                    return;
+                }
+
                 if (validateAccessKey(key)) {
                     state.accessKey = key;
                     saveState();
@@ -650,19 +656,13 @@
             
             // --- Admin Panel Logic ---
             function handleAdminTrigger() {
-                clearTimeout(adminClickTimer);
-                adminClickCount++;
-                if (adminClickCount === 5) {
-                    adminClickCount = 0;
-                    if (!adminLoggedIn) {
-                        $('#admin-password-input').value = '';
-                        toggleModal(adminLoginModal, true);
-                    } else {
-                        renderAdminPanel();
-                        toggleModal(adminPanelModal, true);
-                    }
+                if (!adminLoggedIn) {
+                    $('#admin-password-input').value = '';
+                    toggleModal(adminLoginModal, true);
+                } else {
+                    renderAdminPanel();
+                    toggleModal(adminPanelModal, true);
                 }
-                adminClickTimer = setTimeout(() => { adminClickCount = 0; }, 1000);
             }
 
             function handleAdminLogin() {
