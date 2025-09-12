@@ -59,16 +59,42 @@
             -webkit-backdrop-filter: blur(8px);
             backdrop-filter: blur(8px);
         }
-        .btn-glow {
-            box-shadow: 0 0 5px var(--accent), 0 0 10px var(--accent);
+        .action-btn {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: background-color 0.2s;
         }
-        .btn-premium {
-            background-image: linear-gradient(to right, #6366f1, #a855f7, #ec4899);
+        .action-btn:hover:not(:disabled) { background-color: var(--accent); color: white; }
+        .action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .admin-input {
+            width: 100%;
+            background-color: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 8px 12px;
+            color: var(--text-primary);
+        }
+        .admin-btn-accent {
+            background-color: var(--accent);
             color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: background-color 0.2s;
         }
+        .admin-btn-accent:hover { background-color: var(--accent-hover); }
+        .prose h4 { color: var(--text-primary); font-weight: 600; margin-top: 1em; margin-bottom: 0.5em;}
+        .prose h5 { color: var(--text-primary); font-weight: 600; margin-top: 1em; margin-bottom: 0.5em;}
+        .prose p { margin-bottom: 1em; }
+        .prose ul { margin-left: 1.5em; list-style-type: disc; }
+        .prose li { margin-bottom: 0.5em; }
+        .prose strong { color: var(--text-primary); }
     </style>
 </head>
-<body class="bg-bg-primary text-text-primary antialiased transition-colors duration-300 overflow-hidden">
+<body class="bg-bg-primary text-text-primary antialiased transition-colors duration-300">
 
     <div id="app" class="relative min-h-screen">
         <!-- Background Gradient Glow -->
@@ -100,7 +126,7 @@
 
             <!-- Main App Content (hidden until access key is valid) -->
             <main id="main-content" class="grid grid-cols-1 lg:grid-cols-2 gap-6 hidden">
-                <!-- Left Column: File Upload and Library -->
+                <!-- Left Column -->
                 <div class="flex flex-col gap-6">
                     <div class="glass-pane p-6 rounded-lg">
                         <h2 class="text-xl font-semibold text-text-primary mb-4 flex justify-between items-center">
@@ -118,7 +144,6 @@
                             </label>
                         </div>
                     </div>
-
                     <div id="library-section" class="glass-pane p-6 rounded-lg">
                         <div class="flex justify-between items-center mb-4">
                             <h2 class="text-xl font-semibold text-text-primary">My Library</h2>
@@ -131,8 +156,7 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- Right Column: AI Assistant Output -->
+                <!-- Right Column -->
                 <div class="glass-pane p-6 rounded-lg">
                     <h2 class="text-xl font-semibold text-text-primary mb-4 flex justify-between items-center">
                         <span>2. AI Study Assistant</span>
@@ -144,9 +168,7 @@
                         <button data-action="key-points" class="action-btn" disabled>Key Points</button>
                     </div>
                     <div id="ai-output-container" class="relative h-[28rem]">
-                        <div id="ai-output" class="prose prose-sm max-w-none h-full overflow-y-auto pr-2 text-text-secondary">
-                             <!-- AI content will be injected here -->
-                        </div>
+                        <div id="ai-output" class="prose prose-sm max-w-none h-full overflow-y-auto pr-2 text-text-secondary"></div>
                          <div id="output-placeholder" class="absolute inset-0 flex flex-col items-center justify-center text-center text-text-secondary">
                             <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mb-4 text-gray-500"><path d="M12 8V4H8"></path><path d="M20 12V8h-4"></path><path d="M12 16v4h4"></path><path d="M4 12v4h4"></path><rect width="12" height="12" x="6" y="6" rx="1"></rect></svg>
                             <p>Select a document and an AI action to begin.</p>
@@ -162,7 +184,6 @@
     </div>
     
     <!-- Modals -->
-    <!-- Access Key Modal -->
     <div id="access-key-modal" class="fixed inset-0 modal-bg flex items-center justify-center p-4 z-50">
         <div class="bg-bg-secondary rounded-lg shadow-2xl p-6 w-full max-w-sm transform transition-all scale-95 opacity-0">
             <h2 class="text-xl font-semibold text-text-primary text-center mb-4">Enter Access Key</h2>
@@ -171,8 +192,6 @@
             <button id="submit-access-key-btn" class="w-full mt-4 bg-accent text-white font-semibold px-4 py-2 rounded-md hover:bg-accent-hover transition-colors">Unlock</button>
         </div>
     </div>
-    
-    <!-- Admin Login Modal -->
     <div id="admin-login-modal" class="fixed inset-0 modal-bg flex items-center justify-center p-4 z-50 hidden">
         <div class="bg-bg-secondary rounded-lg shadow-2xl p-6 w-full max-w-sm transform transition-all scale-95 opacity-0">
             <h2 class="text-xl font-semibold text-text-primary text-center mb-4">Admin Access</h2>
@@ -180,8 +199,6 @@
             <button id="admin-login-btn" class="w-full mt-4 bg-danger text-white font-semibold px-4 py-2 rounded-md hover:bg-danger-hover transition-colors">Login</button>
         </div>
     </div>
-
-    <!-- Admin Panel Modal -->
     <div id="admin-panel-modal" class="fixed inset-0 modal-bg flex items-center justify-center p-4 z-50 hidden">
         <div class="bg-bg-secondary rounded-lg shadow-2xl p-6 w-full max-w-3xl transform transition-all scale-95 opacity-0 max-h-[90vh] flex flex-col">
             <div class="flex justify-between items-center border-b border-border-color pb-3 mb-4 flex-shrink-0">
@@ -190,9 +207,7 @@
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                 </button>
             </div>
-            
             <div class="flex-grow overflow-y-auto pr-2">
-                <!-- Tiers Configuration -->
                 <h3 class="font-semibold mb-2">Access Tiers</h3>
                 <div id="admin-tiers-list" class="space-y-2 mb-4"></div>
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-2 p-2 border border-dashed border-border-color rounded-md">
@@ -201,8 +216,6 @@
                     <input id="new-tier-queries" type="number" placeholder="AI Queries/Day" class="admin-input">
                     <button id="add-tier-btn" class="admin-btn-accent">Add Tier</button>
                 </div>
-                
-                <!-- Keys Configuration -->
                 <h3 class="font-semibold mt-6 mb-2">Access Keys</h3>
                 <div id="admin-keys-list" class="space-y-1 mb-4 h-48 overflow-y-auto border border-border-color rounded-md p-2"></div>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-2 p-2 border border-dashed border-border-color rounded-md">
@@ -216,8 +229,6 @@
             </div>
         </div>
     </div>
-    
-    <!-- User Manual Modal -->
     <div id="user-manual-modal" class="fixed inset-0 modal-bg flex items-center justify-center p-4 z-50 hidden">
         <div class="bg-bg-secondary rounded-lg shadow-2xl p-6 w-full max-w-3xl transform transition-all scale-95 opacity-0 max-h-[90vh] flex flex-col">
              <div class="flex justify-between items-center border-b border-border-color pb-3 mb-4 flex-shrink-0">
@@ -226,12 +237,9 @@
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                 </button>
             </div>
-            <div id="user-manual-content" class="prose prose-sm max-w-none text-text-secondary flex-grow overflow-y-auto pr-2">
-                <!-- User manual content will be injected here -->
-            </div>
+            <div id="user-manual-content" class="prose prose-sm max-w-none text-text-secondary flex-grow overflow-y-auto pr-2"></div>
         </div>
     </div>
-
 
     <!-- Toast Notification -->
     <div id="toast" class="fixed bottom-5 right-5 bg-success text-white py-2 px-4 rounded-lg shadow-lg opacity-0 transform translate-y-5 transition-all duration-300 z-[100]">
@@ -239,56 +247,15 @@
     </div>
 
     <script>
-        // --- NOTE: This script is embedded in the HTML file for single-file distribution ---
-        
-        // --- Embedded User Manual Content ---
-        const USER_MANUAL_HTML = `
-            <h4>Welcome to Smart Study Companion!</h4>
-            <p>This guide will help you get started with turning your study materials into powerful learning tools.</p>
-            
-            <h5>1. Getting Started: Access Key</h5>
-            <p>The first thing you see is a prompt for an <strong>Access Key</strong>. This key unlocks the app's features based on your plan. Enter the key provided to you and click "Unlock" to begin.</p>
-            
-            <h5>2. Loading Your Study Materials</h5>
-            <ul>
-                <li><strong>Upload Files</strong>: Drag and drop your files (PDF, TXT, JPG, PNG) into the upload box on the left, or click it to select files from your device.</li>
-                <li><strong>ZIP Archives</strong>: You can upload a .zip file containing multiple documents, and the app will automatically unpack them.</li>
-                <li><strong>File Limits</strong>: Your current plan's file limit is shown above the upload box.</li>
-            </ul>
-            
-            <h5>3. Managing Your Library</h5>
-            <ul>
-                <li>Your uploaded documents appear in the "My Library" list.</li>
-                <li><strong>Select a Document</strong>: Click on a document to select it. It will be highlighted, making it the active document for the AI Assistant.</li>
-                <li><strong>Delete Documents</strong>: Click the trash icon next to a file to delete it individually, or use the "Delete All" button to clear your library.</li>
-            </ul>
-
-            <h5>4. Using the AI Study Assistant</h5>
-            <p>Once you've selected a document, the AI Assistant buttons become active.</p>
-            <ul>
-                <li><strong>Summarize</strong>: Generates a concise summary of the selected document's content.</li>
-                <li><strong>Create MCQs</strong>: Creates multiple-choice questions based on the text to help you test your knowledge.</li>
-                <li><strong>Key Points</strong>: Extracts the most important points and facts into a clean list.</li>
-                <li><strong>Query Limits</strong>: Your daily AI query limit is shown above the AI action buttons. This resets every 24 hours.</li>
-            </ul>
-
-            <h5>5. Important Notes</h5>
-            <ul>
-                <li><strong>Privacy</strong>: All file processing and text extraction happens on your own device. Your files are never uploaded to a server. Only the extracted text is sent to the AI when you request an action.</li>
-                <li><strong>Data Storage</strong>: Your library and access key are saved in your browser's local storage. Clearing your browser data will also clear your library.</li>
-            </ul>
-        `;
+        const USER_MANUAL_HTML = `<h4>Welcome to Smart Study Companion!</h4><p>This guide will help you get started with turning your study materials into powerful learning tools.</p><h5>1. Getting Started: Access Key</h5><p>The first thing you see is a prompt for an <strong>Access Key</strong>. This key unlocks the app's features based on your plan. Enter the key provided to you and click "Unlock" to begin.</p><h5>2. Loading Your Study Materials</h5><ul><li><strong>Upload Files</strong>: Drag and drop your files (PDF, TXT, JPG, PNG) into the upload box on the left, or click it to select files from your device.</li><li><strong>ZIP Archives</strong>: You can upload a .zip file containing multiple documents, and the app will automatically unpack them.</li><li><strong>File Limits</strong>: Your current plan's file limit is shown above the upload box.</li></ul><h5>3. Managing Your Library</h5><ul><li>Your uploaded documents appear in the "My Library" list.</li><li><strong>Select a Document</strong>: Click on a document to select it. It will be highlighted, making it the active document for the AI Assistant.</li><li><strong>Delete Documents</strong>: Click the trash icon next to a file to delete it individually, or use the "Delete All" button to clear your library.</li></ul><h5>4. Using the AI Study Assistant</h5><p>Once you've selected a document, the AI Assistant buttons become active.</p><ul><li><strong>Summarize</strong>: Generates a concise summary of the selected document's content.</li><li><strong>Create MCQs</strong>: Creates multiple-choice questions based on the text to help you test your knowledge.</li><li><strong>Key Points</strong>: Extracts the most important points and facts into a clean list.</li><li><strong>Query Limits</strong>: Your daily AI query limit is shown above the AI action buttons. This resets every 24 hours.</li></ul><h5>5. Important Notes</h5><ul><li><strong>Privacy</strong>: All file processing and text extraction happens on your own device. Your files are never uploaded to a server. Only the extracted text is sent to the AI when you request an action.</li><li><strong>Data Storage</strong>: Your library and access key are saved in your browser's local storage. Clearing your browser data will also clear your library.</li></ul>`;
 
         document.addEventListener('DOMContentLoaded', () => {
-            // --- This is a huge script, so we'll modularize it with functions. ---
-            
-            // --- SECTION: App Constants & Configuration ---
             const APP_CONFIG = {
                 STORAGE_KEYS: {
                     mainState: 'smartStudyAppState_v3',
                     adminConfig: 'smartStudyAdminConfig_v3'
                 },
-                ADMIN_PASSWORD: "CHANGE_ME", // IMPORTANT: This should be changed by the developer!
+                ADMIN_PASSWORD: "CHANGE_ME", // IMPORTANT: CHANGE THIS PASSWORD!
                 DEFAULT_ADMIN_CONFIG: {
                     tiers: [
                         { id: 'free', name: 'Free', maxFiles: 5, aiQueriesPerDay: 10 },
@@ -297,42 +264,529 @@
                     keys: []
                 }
             };
-            
-            // --- SECTION: State Management ---
-            let state = {
-                accessKey: null,
-                userTier: null,
-                library: [],
-                aiUsage: { date: new Date().toISOString().slice(0, 10), count: 0 },
-                selectedDocId: null,
-                theme: 'dark'
-            };
+
+            let state = {};
             let adminConfig = {};
             let adminLoggedIn = false;
+            let adminClickCount = 0;
+            let adminClickTimer = null;
             
-            // --- SECTION: DOM Element Selectors ---
             const $ = (selector) => document.querySelector(selector);
             const $$ = (selector) => document.querySelectorAll(selector);
 
-            // --- A utility function to show/hide modals with animation
-            function toggleModal(modal, show) {
-                const modalContent = modal.querySelector('div');
-                if (show) {
-                    modal.classList.remove('hidden');
-                    setTimeout(() => {
-                        modalContent.classList.remove('scale-95', 'opacity-0');
-                    }, 10);
+            // --- DOM Elements ---
+            const mainContent = $('#main-content');
+            const appStatus = $('#app-status');
+            const fileLimitIndicator = $('#file-limit-indicator');
+            const queryLimitIndicator = $('#query-limit-indicator');
+            const libraryList = $('#library-list');
+            const libraryPlaceholder = $('#library-placeholder');
+            const deleteAllBtn = $('#delete-all-btn');
+            const assistantControls = $('#assistant-controls');
+            const aiOutput = $('#ai-output');
+            const outputPlaceholder = $('#output-placeholder');
+            const loadingSpinner = $('#loading-spinner');
+            const fileInput = $('#file-input');
+            const uploadArea = $('#upload-area');
+
+            // --- Modals ---
+            const accessKeyModal = $('#access-key-modal');
+            const adminLoginModal = $('#admin-login-modal');
+            const adminPanelModal = $('#admin-panel-modal');
+            const userManualModal = $('#user-manual-modal');
+
+            // --- App Initialization ---
+            function initializeApp() {
+                loadState();
+                loadAdminConfig();
+                applyTheme(state.theme);
+                bindEventListeners();
+                
+                $('#user-manual-content').innerHTML = USER_MANUAL_HTML;
+
+                if (state.accessKey && validateAccessKey(state.accessKey)) {
+                    unlockApp();
                 } else {
-                    modalContent.classList.add('scale-95', 'opacity-0');
-                    setTimeout(() => {
-                        modal.classList.add('hidden');
-                    }, 200);
+                    toggleModal(accessKeyModal, true);
+                }
+            }
+
+            // --- State & Config Management ---
+            function loadState() {
+                const savedState = localStorage.getItem(APP_CONFIG.STORAGE_KEYS.mainState);
+                const defaultState = {
+                    accessKey: null,
+                    userTier: null,
+                    library: [],
+                    aiUsage: { date: new Date().toISOString().slice(0, 10), count: 0 },
+                    selectedDocId: null,
+                    theme: 'dark'
+                };
+                state = savedState ? { ...defaultState, ...JSON.parse(savedState) } : defaultState;
+                
+                // Reset daily AI usage if the date has changed
+                const today = new Date().toISOString().slice(0, 10);
+                if(state.aiUsage.date !== today) {
+                    state.aiUsage = { date: today, count: 0 };
+                    saveState();
+                }
+            }
+            function saveState() {
+                localStorage.setItem(APP_CONFIG.STORAGE_KEYS.mainState, JSON.stringify(state));
+            }
+            function loadAdminConfig() {
+                const savedConfig = localStorage.getItem(APP_CONFIG.STORAGE_KEYS.adminConfig);
+                adminConfig = savedConfig ? JSON.parse(savedConfig) : APP_CONFIG.DEFAULT_ADMIN_CONFIG;
+            }
+            function saveAdminConfig() {
+                localStorage.setItem(APP_CONFIG.STORAGE_KEYS.adminConfig, JSON.stringify(adminConfig));
+            }
+
+            // --- Event Listeners ---
+            function bindEventListeners() {
+                $('#submit-access-key-btn').addEventListener('click', handleAccessKeySubmit);
+                $('#app-title').addEventListener('click', handleAdminTrigger);
+                $('#admin-login-btn').addEventListener('click', handleAdminLogin);
+                $('#theme-toggle').addEventListener('click', toggleTheme);
+                $('#help-btn').addEventListener('click', () => toggleModal(userManualModal, true));
+                $('#close-user-manual-btn').addEventListener('click', () => toggleModal(userManualModal, false));
+                fileInput.addEventListener('change', handleFileUpload);
+                deleteAllBtn.addEventListener('click', confirmDeleteAll);
+                assistantControls.addEventListener('click', handleAssistantAction);
+                
+                const dropzone = fileInput.parentElement.parentElement;
+                ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                    dropzone.addEventListener(eventName, e => e.preventDefault() && e.stopPropagation());
+                });
+                ['dragenter', 'dragover'].forEach(eventName => {
+                    dropzone.addEventListener(eventName, () => dropzone.classList.add('border-accent'));
+                });
+                ['dragleave', 'drop'].forEach(eventName => {
+                    dropzone.addEventListener(eventName, () => dropzone.classList.remove('border-accent'));
+                });
+                dropzone.addEventListener('drop', e => {
+                    if (e.dataTransfer.files.length > 0) handleFileUpload({ target: { files: e.dataTransfer.files } });
+                });
+                
+                // Admin Panel Listeners
+                $('#close-admin-panel-btn').addEventListener('click', () => toggleModal(adminPanelModal, false));
+                $('#add-tier-btn').addEventListener('click', addAdminTier);
+                $('#add-key-btn').addEventListener('click', addAdminKey);
+                $('#save-admin-config-btn').addEventListener('click', () => {
+                    saveAdminConfig();
+                    toggleModal(adminPanelModal, false);
+                    showToast('Admin configuration saved!', 'success');
+                });
+            }
+
+            // --- Core App Flow & UI ---
+            function unlockApp() {
+                mainContent.classList.remove('hidden');
+                toggleModal(accessKeyModal, false);
+                appStatus.textContent = `Tier: ${state.userTier.name}`;
+                renderUIForTier();
+                renderLibrary();
+            }
+            
+            function renderUIForTier() {
+                fileLimitIndicator.textContent = `${state.library.length}/${state.userTier.maxFiles} files`;
+                queryLimitIndicator.textContent = `${state.aiUsage.count}/${state.userTier.aiQueriesPerDay} AI queries today`;
+                
+                if (state.library.length >= state.userTier.maxFiles) {
+                    uploadArea.classList.add('opacity-50', 'cursor-not-allowed');
+                    fileInput.disabled = true;
+                } else {
+                    uploadArea.classList.remove('opacity-50', 'cursor-not-allowed');
+                    fileInput.disabled = false;
+                }
+            }
+
+            function handleAccessKeySubmit() {
+                const key = $('#access-key-input').value.trim();
+                if (validateAccessKey(key)) {
+                    state.accessKey = key;
+                    saveState();
+                    unlockApp();
+                    showToast('Access Granted!', 'success');
+                } else {
+                    showToast('Invalid Access Key.', 'error');
+                }
+            }
+
+            function validateAccessKey(key) {
+                const foundKey = adminConfig.keys.find(k => k.key === key);
+                if (foundKey) {
+                    state.userTier = adminConfig.tiers.find(t => t.id === foundKey.tierId);
+                    return !!state.userTier;
+                }
+                return false;
+            }
+            
+            // --- Library Management ---
+            function renderLibrary() {
+                libraryList.innerHTML = '';
+                if (state.library.length === 0) {
+                    libraryList.appendChild(libraryPlaceholder);
+                    libraryPlaceholder.style.display = 'block';
+                    deleteAllBtn.disabled = true;
+                } else {
+                    libraryPlaceholder.style.display = 'none';
+                    state.library.forEach(doc => libraryList.appendChild(createDocElement(doc)));
+                    deleteAllBtn.disabled = false;
+                }
+                
+                if (state.selectedDocId) {
+                    const selectedEl = $(`[data-id="${state.selectedDocId}"]`);
+                    if (selectedEl) selectedEl.classList.add('!border-accent', 'bg-accent/10');
+                }
+                updateAssistantButtons();
+            }
+            
+            function createDocElement(doc) {
+                const el = document.createElement('div');
+                el.className = 'flex justify-between items-center p-3 bg-bg-primary rounded-md border-2 border-transparent hover:border-accent/50 cursor-pointer transition-all';
+                el.dataset.id = doc.id;
+                const icon = doc.type.startsWith('image') ? '🖼️' : (doc.type === 'application/pdf' ? '📄' : '📝');
+                el.innerHTML = `<div class="flex items-center gap-3 overflow-hidden"><span class="text-xl">${icon}</span><div class="truncate"><p class="font-medium text-text-primary truncate">${doc.name}</p><p class="text-xs text-text-secondary">${doc.meta.method ? `Via ${doc.meta.method.toUpperCase()}` : ''}</p></div></div><button data-delete-id="${doc.id}" class="delete-doc-btn flex-shrink-0 p-1 rounded-full text-text-secondary hover:text-danger hover:bg-danger/20 transition-colors"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>`;
+                el.addEventListener('click', e => {
+                    if (e.target.closest('.delete-doc-btn')) { e.stopPropagation(); deleteDocument(doc.id); } 
+                    else { selectDocument(doc.id); }
+                });
+                return el;
+            }
+            
+            function selectDocument(docId) {
+                state.selectedDocId = (state.selectedDocId === docId) ? null : docId;
+                renderLibrary();
+            }
+
+            function deleteDocument(docId) {
+                state.library = state.library.filter(doc => doc.id !== docId);
+                if(state.selectedDocId === docId) state.selectedDocId = null;
+                saveState();
+                renderLibrary();
+                renderUIForTier();
+                showToast('Document removed.');
+            }
+
+            function confirmDeleteAll() {
+                if (confirm('Are you sure you want to delete all documents?')) {
+                    state.library = [];
+                    state.selectedDocId = null;
+                    saveState();
+                    renderLibrary();
+                    renderUIForTier();
+                    showToast('Library cleared.', 'success');
                 }
             }
             
-            // --- The rest of the app logic will be inside the DOMContentLoaded listener.
-            // --- This keeps the global scope clean.
+            // --- File Processing ---
+            async function handleFileUpload(event) {
+                const files = event.target.files;
+                if (!files || files.length === 0) return;
+                
+                if (state.library.length + files.length > state.userTier.maxFiles) {
+                    showToast(`Cannot upload. File limit of ${state.userTier.maxFiles} would be exceeded.`, 'error');
+                    return;
+                }
+
+                for (const file of files) {
+                    setStatus(`Processing ${file.name}...`);
+                    try {
+                        if (file.type === 'application/pdf') await processPdf(file);
+                        else if (file.type.startsWith('image/')) await processImage(file);
+                        else if (file.type === 'text/plain') await processText(file);
+                        else if (file.name.toLowerCase().endsWith('.zip')) await processZip(file);
+                        else showToast(`Unsupported file type: ${file.name}`, 'error');
+                    } catch (error) {
+                        console.error('Error processing file:', file.name, error);
+                        showToast(`Failed to process ${file.name}`, 'error');
+                    }
+                }
+                setStatus(`Ready. Tier: ${state.userTier.name}`);
+                fileInput.value = '';
+            }
+
+            async function processFileContent(file, processor, method) {
+                const text = await processor(file);
+                addDocumentToLibrary(file.name, file.type, text, { method });
+            }
             
+            const processPdf = async file => processFileContent(file, async f => {
+                const buffer = await f.arrayBuffer();
+                let text = await extractTextWithPdfJs(buffer);
+                if (!text || text.trim().length < 100) {
+                    setStatus(`PDF text low, trying OCR on ${f.name}...`);
+                    const ocrText = await extractTextWithTesseract(buffer, 'pdf');
+                    if (ocrText && ocrText.trim().length > text.trim().length) return ocrText;
+                }
+                return text;
+            }, 'pdf.js');
+
+            const processImage = async file => processFileContent(file, f => extractTextWithTesseract(f, 'image'), 'tesseract (ocr)');
+            const processText = async file => processFileContent(file, f => f.text(), 'text');
+            const processZip = async file => {
+                 if(typeof JSZip === 'undefined') return showToast('Cannot process ZIP files.', 'error');
+                 setStatus(`Unpacking ZIP: ${file.name}...`);
+                 const zip = await JSZip.loadAsync(file);
+                 for (const filename in zip.files) {
+                     if (!zip.files[filename].dir) {
+                         const entry = zip.files[filename];
+                         const blob = await entry.async('blob');
+                         await handleFileUpload({target: {files: [new File([blob], filename, {type: blob.type})]}});
+                     }
+                 }
+            };
+            
+            function addDocumentToLibrary(name, type, text, meta) {
+                state.library.push({ id: generateUUID(), name, type, text: text.trim(), meta });
+                saveState();
+                renderLibrary();
+                renderUIForTier();
+                showToast(`Added ${name}`, 'success');
+            }
+
+            async function extractTextWithPdfJs(arrayBuffer) {
+                const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                let fullText = '';
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const textContent = await page.getTextContent();
+                    fullText += textContent.items.map(item => item.str).join(' ') + '\n\n';
+                }
+                return fullText;
+            }
+
+            async function extractTextWithTesseract(source, type) {
+                const worker = await Tesseract.createWorker('eng', 1, { logger: m => { if (m.status === 'recognizing text') setStatus(`OCR Progress: ${Math.round(m.progress * 100)}%`) } });
+                if (type === 'pdf') {
+                    const pdf = await pdfjsLib.getDocument({ data: source }).promise;
+                    let combined = '';
+                    for (let i = 1; i <= pdf.numPages; i++) {
+                        setStatus(`OCR on PDF: Page ${i}/${pdf.numPages}...`);
+                        const page = await pdf.getPage(i);
+                        const vp = page.getViewport({ scale: 2.0 });
+                        const canvas = document.createElement('canvas');
+                        canvas.height = vp.height; canvas.width = vp.width;
+                        await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
+                        const { data: { text } } = await worker.recognize(canvas);
+                        combined += text + '\n\n';
+                    }
+                    await worker.terminate();
+                    return combined;
+                } else {
+                    const { data: { text } } = await worker.recognize(source);
+                    await worker.terminate();
+                    return text;
+                }
+            }
+
+            // --- AI Assistant ---
+            function updateAssistantButtons() {
+                const canQuery = state.aiUsage.count < state.userTier.aiQueriesPerDay;
+                const docSelected = !!state.selectedDocId;
+                $$('.action-btn').forEach(btn => btn.disabled = !canQuery || !docSelected);
+            }
+
+            async function handleAssistantAction(e) {
+                const button = e.target.closest('.action-btn');
+                if (!button || button.disabled) return;
+                
+                state.aiUsage.count++;
+                saveState();
+                renderUIForTier();
+                updateAssistantButtons();
+                
+                const action = button.dataset.action;
+                const doc = state.library.find(d => d.id === state.selectedDocId);
+                
+                let systemPrompt, userPrompt;
+                switch(action) {
+                    case 'summarize':
+                        systemPrompt = "You are an expert academic assistant. Provide a concise, clear, and well-structured summary of the provided text, focusing on the main ideas and key arguments.";
+                        userPrompt = `Please summarize the following text:\n\n---\n\n${doc.text.slice(0, 100000)}`;
+                        break;
+                    case 'mcq':
+                        systemPrompt = "You are a quiz generation expert. Create 5 challenging multiple-choice questions (MCQs) based on the text. Each question must have 4 options (A, B, C, D) and one correct answer. Provide a separate answer key at the end.";
+                        userPrompt = `Generate 5 MCQs from this text:\n\n---\n\n${doc.text.slice(0, 100000)}`;
+                        break;
+                    case 'key-points':
+                        systemPrompt = "You are an efficient study bot. Extract the top 5-7 most important key points from the provided text as a numbered list. Each point should be a single, impactful sentence.";
+                        userPrompt = `Extract the key points from this text:\n\n---\n\n${doc.text.slice(0, 100000)}`;
+                        break;
+                }
+
+                await callGeminiAPI(systemPrompt, userPrompt, state.accessKey);
+            }
+            
+            async function callGeminiAPI(systemInstruction, userQuery, apiKey) {
+                loadingSpinner.classList.remove('hidden');
+                outputPlaceholder.style.display = 'none';
+                aiOutput.innerHTML = '';
+                
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
+                const payload = { contents: [{ parts: [{ text: userQuery }] }], systemInstruction: { parts: [{ text: systemInstruction }] } };
+                
+                try {
+                    const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(`API Error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
+                    }
+                    const result = await response.json();
+                    const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                    if (text) {
+                        aiOutput.innerHTML = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+                    } else { throw new Error('No content returned from API.'); }
+                } catch (error) {
+                    console.error('Gemini API call failed:', error);
+                    aiOutput.innerHTML = `<p class="text-danger">An error occurred: ${error.message}</p>`;
+                    showToast('AI generation failed.', 'error');
+                } finally {
+                    loadingSpinner.classList.add('hidden');
+                    if(aiOutput.innerHTML === '') outputPlaceholder.style.display = 'flex';
+                }
+            }
+            
+            // --- Admin Panel Logic ---
+            function handleAdminTrigger() {
+                clearTimeout(adminClickTimer);
+                adminClickCount++;
+                if (adminClickCount === 5) {
+                    adminClickCount = 0;
+                    if (!adminLoggedIn) {
+                        $('#admin-password-input').value = '';
+                        toggleModal(adminLoginModal, true);
+                    } else {
+                        renderAdminPanel();
+                        toggleModal(adminPanelModal, true);
+                    }
+                }
+                adminClickTimer = setTimeout(() => { adminClickCount = 0; }, 1000);
+            }
+
+            function handleAdminLogin() {
+                if ($('#admin-password-input').value === APP_CONFIG.ADMIN_PASSWORD) {
+                    adminLoggedIn = true;
+                    toggleModal(adminLoginModal, false);
+                    renderAdminPanel();
+                    toggleModal(adminPanelModal, true);
+                    showToast('Admin access granted.', 'success');
+                } else {
+                    showToast('Incorrect admin password.', 'error');
+                }
+            }
+
+            function renderAdminPanel() {
+                // Render Tiers
+                const tiersList = $('#admin-tiers-list');
+                tiersList.innerHTML = '';
+                adminConfig.tiers.forEach(tier => tiersList.appendChild(createAdminTierElement(tier)));
+                // Render Keys
+                const keysList = $('#admin-keys-list');
+                keysList.innerHTML = '';
+                adminConfig.keys.forEach(key => keysList.appendChild(createAdminKeyElement(key)));
+                // Populate tier dropdown
+                const tierSelect = $('#new-key-tier');
+                tierSelect.innerHTML = adminConfig.tiers.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+            }
+            
+            const createAdminTierElement = tier => {
+                const el = document.createElement('div');
+                el.className = 'grid grid-cols-4 gap-2 items-center text-sm p-2 bg-bg-primary rounded-md';
+                el.innerHTML = `<span>${tier.name}</span><span>${tier.maxFiles} files</span><span>${tier.aiQueriesPerDay} Q/day</span><button data-id="${tier.id}" class="justify-self-end text-danger text-xs p-1">Delete</button>`;
+                el.querySelector('button').addEventListener('click', () => deleteAdminTier(tier.id));
+                return el;
+            };
+            
+            const createAdminKeyElement = key => {
+                const el = document.createElement('div');
+                const tierName = adminConfig.tiers.find(t => t.id === key.tierId)?.name || 'Unknown';
+                el.className = 'grid grid-cols-4 gap-2 items-center text-xs p-1';
+                el.innerHTML = `<span class="truncate">${key.note}</span><span class="font-mono truncate">${key.key}</span><span>${tierName}</span><button data-id="${key.key}" class="justify-self-end text-danger text-xs p-1">Delete</button>`;
+                el.querySelector('button').addEventListener('click', () => deleteAdminKey(key.key));
+                return el;
+            };
+            
+            function addAdminTier() {
+                const name = $('#new-tier-name').value.trim();
+                const maxFiles = parseInt($('#new-tier-files').value);
+                const aiQueries = parseInt($('#new-tier-queries').value);
+                if (name && !isNaN(maxFiles) && !isNaN(aiQueries)) {
+                    adminConfig.tiers.push({ id: name.toLowerCase().replace(/\s/g, '_'), name, maxFiles, aiQueriesPerDay: aiQueries });
+                    renderAdminPanel();
+                } else showToast('Invalid tier details.', 'error');
+            }
+            
+            function addAdminKey() {
+                const note = $('#new-key-note').value.trim();
+                const tierId = $('#new-key-tier').value;
+                if (note && tierId) {
+                    adminConfig.keys.push({ key: generateUUID(true), note, tierId });
+                    renderAdminPanel();
+                } else showToast('Note and tier are required.', 'error');
+            }
+
+            function deleteAdminTier(tierId) {
+                if (adminConfig.keys.some(k => k.tierId === tierId)) return showToast('Cannot delete tier assigned to keys.', 'error');
+                adminConfig.tiers = adminConfig.tiers.filter(t => t.id !== tierId);
+                renderAdminPanel();
+            }
+
+            function deleteAdminKey(key) {
+                adminConfig.keys = adminConfig.keys.filter(k => k.key !== key);
+                renderAdminPanel();
+            }
+
+            // --- Utilities ---
+            function toggleModal(modal, show) {
+                const content = modal.querySelector('div');
+                if (show) {
+                    modal.classList.remove('hidden');
+                    setTimeout(() => content.classList.remove('scale-95', 'opacity-0'), 10);
+                } else {
+                    content.classList.add('scale-95', 'opacity-0');
+                    setTimeout(() => modal.classList.add('hidden'), 200);
+                }
+            }
+
+            function showToast(message, type = 'info') {
+                const toast = $('#toast');
+                toast.textContent = message;
+                toast.className = `fixed bottom-5 right-5 text-white py-2 px-4 rounded-lg shadow-lg opacity-0 transform translate-y-5 transition-all duration-300 z-[100]`;
+                const colors = { success: 'bg-success', error: 'bg-danger', info: 'bg-accent' };
+                toast.classList.add(colors[type] || 'bg-accent');
+                toast.classList.remove('opacity-0', 'translate-y-5');
+                setTimeout(() => toast.classList.add('opacity-0', 'translate-y-5'), 3000);
+            }
+
+            function toggleTheme() {
+                state.theme = state.theme === 'dark' ? 'light' : 'dark';
+                applyTheme(state.theme);
+                saveState();
+            }
+
+            function applyTheme(theme) {
+                const html = document.documentElement;
+                if (theme === 'light') {
+                    html.classList.remove('dark'); html.classList.add('light');
+                    $('#moon-icon').classList.remove('hidden'); $('#sun-icon').classList.add('hidden');
+                } else {
+                    html.classList.remove('light'); html.classList.add('dark');
+                    $('#sun-icon').classList.remove('hidden'); $('#moon-icon').classList.add('hidden');
+                }
+            }
+            
+            const generateUUID = (apiKeyStyle = false) => {
+                const format = apiKeyStyle ? 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx' : 'xxxxxxxx-xxxx-xxxx-yxxx-xxxxxxxxxxxx';
+                return format.replace(/[xy]/g, c => {
+                    const r = Math.random() * 16 | 0;
+                    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+                    return v.toString(16);
+                });
+            };
+
+            // --- App Entry Point ---
             initializeApp();
         });
     </script>
