@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Study Companion AI</title>
+    
+    <!-- Tailwind CSS for modern styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Poppins for a more modern feel -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Core Libraries: pdf.js, Tesseract.js, JSZip -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;</script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+    <style>
+        /* Custom styles to create a premium feel */
+        body { font-family: 'Poppins', sans-serif; }
+        .dark {
+            --bg-primary: #0d1117; /* GitHub Dark Dimmed */
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --border-color: #30363d;
+            --text-primary: #c9d1d9;
+            --text-secondary: #8b949e;
+            --accent: #58a6ff;
+            --accent-hover: #388bfd;
+            --danger: #f85149;
+            --danger-hover: #da3633;
+            --success: #3fb950;
+        }
+        .light {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f6f8fa;
+            --bg-tertiary: #e1e4e8;
+            --border-color: #d0d7de;
+            --text-primary: #24292f;
+            --text-secondary: #57606a;
+            --accent: #0969da;
+            --accent-hover: #0550ae;
+            --danger: #d73a49;
+            --danger-hover: #b02a37;
+            --success: #1a7f37;
+        }
+        .glass-pane {
+            background: rgba(255, 255, 255, 0.05);
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color);
+        }
+        .modal-bg {
+            background: rgba(13, 17, 23, 0.8);
+            -webkit-backdrop-filter: blur(8px);
+            backdrop-filter: blur(8px);
+        }
+        .btn-glow {
+            box-shadow: 0 0 5px var(--accent), 0 0 10px var(--accent);
+        }
+        .btn-premium {
+            background-image: linear-gradient(to right, #6366f1, #a855f7, #ec4899);
+            color: white;
+        }
+    </style>
+</head>
+<body class="bg-bg-primary text-text-primary antialiased transition-colors duration-300 overflow-hidden">
+
+    <div id="app" class="relative min-h-screen">
+        <!-- Background Gradient Glow -->
+        <div class="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
+            <div class="absolute top-[-20%] left-[-20%] w-[60%] h-[60%] bg-accent/20 rounded-full filter blur-3xl animate-pulse opacity-30"></div>
+            <div class="absolute bottom-[-20%] right-[-20%] w-[50%] h-[50%] bg-danger/20 rounded-full filter blur-3xl animate-pulse opacity-20 animation-delay-4000"></div>
+        </div>
+
+        <div class="relative z-10 max-w-7xl mx-auto p-4 md:p-6 lg:p-8">
+            <!-- Header -->
+            <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+                <div id="app-title" class="cursor-pointer">
+                    <h1 class="text-3xl md:text-4xl font-bold text-text-primary flex items-center gap-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-accent"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"></path></svg>
+                        Smart Study Companion
+                    </h1>
+                    <p id="app-status" class="text-sm text-text-secondary mt-1">Ready. Please enter your access key to begin.</p>
+                </div>
+                <div class="flex items-center gap-2 mt-4 md:mt-0">
+                    <button id="help-btn" class="p-2 rounded-md bg-bg-secondary/50 hover:bg-bg-tertiary transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-text-secondary"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                    </button>
+                    <button id="theme-toggle" class="p-2 rounded-md bg-bg-secondary/50 hover:bg-bg-tertiary transition-colors">
+                        <svg id="sun-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-text-secondary"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path></svg>
+                        <svg id="moon-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden text-text-secondary"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Main App Content (hidden until access key is valid) -->
+            <main id="main-content" class="grid grid-cols-1 lg:grid-cols-2 gap-6 hidden">
+                <!-- Left Column: File Upload and Library -->
+                <div class="flex flex-col gap-6">
+                    <div class="glass-pane p-6 rounded-lg">
+                        <h2 class="text-xl font-semibold text-text-primary mb-4 flex justify-between items-center">
+                            <span>1. Load Your Material</span>
+                            <span id="file-limit-indicator" class="text-xs font-mono text-text-secondary"></span>
+                        </h2>
+                        <div id="upload-area" class="flex items-center justify-center w-full">
+                            <label for="file-input" class="flex flex-col items-center justify-center w-full h-40 border-2 border-border-color border-dashed rounded-lg cursor-pointer bg-bg-secondary hover:bg-bg-tertiary transition-colors">
+                                <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                    <svg class="w-8 h-8 mb-4 text-text-secondary" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/></svg>
+                                    <p class="mb-2 text-sm text-text-secondary"><span class="font-semibold">Click to upload</span> or drag & drop</p>
+                                    <p class="text-xs text-text-secondary">PDF, TXT, JPG, PNG, or ZIP</p>
+                                </div>
+                                <input id="file-input" type="file" class="hidden" multiple />
+                            </label>
+                        </div>
+                    </div>
+
+                    <div id="library-section" class="glass-pane p-6 rounded-lg">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-xl font-semibold text-text-primary">My Library</h2>
+                            <button id="delete-all-btn" class="text-sm font-medium text-danger hover:text-danger-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors" disabled>Delete All</button>
+                        </div>
+                        <div id="library-list" class="space-y-3 h-72 overflow-y-auto pr-2">
+                            <div id="library-placeholder" class="text-center text-text-secondary py-8">
+                                <p>Your uploaded documents will appear here.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: AI Assistant Output -->
+                <div class="glass-pane p-6 rounded-lg">
+                    <h2 class="text-xl font-semibold text-text-primary mb-4 flex justify-between items-center">
+                        <span>2. AI Study Assistant</span>
+                        <span id="query-limit-indicator" class="text-xs font-mono text-text-secondary"></span>
+                    </h2>
+                    <div id="assistant-controls" class="flex flex-wrap gap-2 mb-4 border-b border-border-color pb-4">
+                        <button data-action="summarize" class="action-btn" disabled>Summarize</button>
+                        <button data-action="mcq" class="action-btn" disabled>Create MCQs</button>
+                        <button data-action="key-points" class="action-btn" disabled>Key Points</button>
+                    </div>
+                    <div id="ai-output-container" class="relative h-[28rem]">
+                        <div id="ai-output" class="prose prose-sm max-w-none h-full overflow-y-auto pr-2 text-text-secondary">
+                             <!-- AI content will be injected here -->
+                        </div>
+                         <div id="output-placeholder" class="absolute inset-0 flex flex-col items-center justify-center text-center text-text-secondary">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mb-4 text-gray-500"><path d="M12 8V4H8"></path><path d="M20 12V8h-4"></path><path d="M12 16v4h4"></path><path d="M4 12v4h4"></path><rect width="12" height="12" x="6" y="6" rx="1"></rect></svg>
+                            <p>Select a document and an AI action to begin.</p>
+                        </div>
+                        <div id="loading-spinner" class="absolute inset-0 hidden flex-col items-center justify-center bg-bg-secondary/50">
+                             <svg class="animate-spin h-8 w-8 text-accent" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                            <p class="mt-4">AI is thinking...</p>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <!-- Modals -->
+    <!-- Access Key Modal -->
+    <div id="access-key-modal" class="fixed inset-0 modal-bg flex items-center justify-center p-4 z-50">
+        <div class="bg-bg-secondary rounded-lg shadow-2xl p-6 w-full max-w-sm transform transition-all scale-95 opacity-0">
+            <h2 class="text-xl font-semibold text-text-primary text-center mb-4">Enter Access Key</h2>
+            <p class="text-text-secondary text-center text-sm mb-6">You need a valid access key to use the application.</p>
+            <input type="text" id="access-key-input" class="w-full bg-bg-primary border border-border-color rounded-md px-3 py-2 text-text-primary focus:ring-2 focus:ring-accent focus:outline-none placeholder-text-secondary" placeholder="xxxx-xxxx-xxxx-xxxx">
+            <button id="submit-access-key-btn" class="w-full mt-4 bg-accent text-white font-semibold px-4 py-2 rounded-md hover:bg-accent-hover transition-colors">Unlock</button>
+        </div>
+    </div>
+    
+    <!-- Admin Login Modal -->
+    <div id="admin-login-modal" class="fixed inset-0 modal-bg flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-bg-secondary rounded-lg shadow-2xl p-6 w-full max-w-sm transform transition-all scale-95 opacity-0">
+            <h2 class="text-xl font-semibold text-text-primary text-center mb-4">Admin Access</h2>
+            <input type="password" id="admin-password-input" class="w-full bg-bg-primary border border-border-color rounded-md px-3 py-2 text-text-primary focus:ring-2 focus:ring-accent focus:outline-none" placeholder="Password">
+            <button id="admin-login-btn" class="w-full mt-4 bg-danger text-white font-semibold px-4 py-2 rounded-md hover:bg-danger-hover transition-colors">Login</button>
+        </div>
+    </div>
+
+    <!-- Admin Panel Modal -->
+    <div id="admin-panel-modal" class="fixed inset-0 modal-bg flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-bg-secondary rounded-lg shadow-2xl p-6 w-full max-w-3xl transform transition-all scale-95 opacity-0 max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center border-b border-border-color pb-3 mb-4 flex-shrink-0">
+                <h2 class="text-xl font-semibold text-text-primary">Admin Configuration</h2>
+                <button id="close-admin-panel-btn" class="p-1 rounded-full hover:bg-bg-tertiary">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            
+            <div class="flex-grow overflow-y-auto pr-2">
+                <!-- Tiers Configuration -->
+                <h3 class="font-semibold mb-2">Access Tiers</h3>
+                <div id="admin-tiers-list" class="space-y-2 mb-4"></div>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-2 p-2 border border-dashed border-border-color rounded-md">
+                    <input id="new-tier-name" placeholder="Tier Name (e.g., Premium)" class="admin-input">
+                    <input id="new-tier-files" type="number" placeholder="Max Files" class="admin-input">
+                    <input id="new-tier-queries" type="number" placeholder="AI Queries/Day" class="admin-input">
+                    <button id="add-tier-btn" class="admin-btn-accent">Add Tier</button>
+                </div>
+                
+                <!-- Keys Configuration -->
+                <h3 class="font-semibold mt-6 mb-2">Access Keys</h3>
+                <div id="admin-keys-list" class="space-y-1 mb-4 h-48 overflow-y-auto border border-border-color rounded-md p-2"></div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-2 p-2 border border-dashed border-border-color rounded-md">
+                    <input id="new-key-note" placeholder="Note (e.g., John Doe)" class="admin-input">
+                    <select id="new-key-tier" class="admin-input"></select>
+                    <button id="add-key-btn" class="admin-btn-accent">Generate New Key</button>
+                </div>
+            </div>
+             <div class="flex justify-end mt-6 flex-shrink-0">
+                <button id="save-admin-config-btn" class="bg-success text-white font-semibold px-4 py-2 rounded-md hover:opacity-80 transition-opacity">Save & Close</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- User Manual Modal -->
+    <div id="user-manual-modal" class="fixed inset-0 modal-bg flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-bg-secondary rounded-lg shadow-2xl p-6 w-full max-w-3xl transform transition-all scale-95 opacity-0 max-h-[90vh] flex flex-col">
+             <div class="flex justify-between items-center border-b border-border-color pb-3 mb-4 flex-shrink-0">
+                <h2 class="text-xl font-semibold text-text-primary">User Manual</h2>
+                <button id="close-user-manual-btn" class="p-1 rounded-full hover:bg-bg-tertiary">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <div id="user-manual-content" class="prose prose-sm max-w-none text-text-secondary flex-grow overflow-y-auto pr-2">
+                <!-- User manual content will be injected here -->
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-success text-white py-2 px-4 rounded-lg shadow-lg opacity-0 transform translate-y-5 transition-all duration-300 z-[100]">
+        <p>Toast message!</p>
+    </div>
+
+    <script>
+        // --- NOTE: This script is embedded in the HTML file for single-file distribution ---
+        
+        // --- Embedded User Manual Content ---
+        const USER_MANUAL_HTML = `
+            <h4>Welcome to Smart Study Companion!</h4>
+            <p>This guide will help you get started with turning your study materials into powerful learning tools.</p>
+            
+            <h5>1. Getting Started: Access Key</h5>
+            <p>The first thing you see is a prompt for an <strong>Access Key</strong>. This key unlocks the app's features based on your plan. Enter the key provided to you and click "Unlock" to begin.</p>
+            
+            <h5>2. Loading Your Study Materials</h5>
+            <ul>
+                <li><strong>Upload Files</strong>: Drag and drop your files (PDF, TXT, JPG, PNG) into the upload box on the left, or click it to select files from your device.</li>
+                <li><strong>ZIP Archives</strong>: You can upload a .zip file containing multiple documents, and the app will automatically unpack them.</li>
+                <li><strong>File Limits</strong>: Your current plan's file limit is shown above the upload box.</li>
+            </ul>
+            
+            <h5>3. Managing Your Library</h5>
+            <ul>
+                <li>Your uploaded documents appear in the "My Library" list.</li>
+                <li><strong>Select a Document</strong>: Click on a document to select it. It will be highlighted, making it the active document for the AI Assistant.</li>
+                <li><strong>Delete Documents</strong>: Click the trash icon next to a file to delete it individually, or use the "Delete All" button to clear your library.</li>
+            </ul>
+
+            <h5>4. Using the AI Study Assistant</h5>
+            <p>Once you've selected a document, the AI Assistant buttons become active.</p>
+            <ul>
+                <li><strong>Summarize</strong>: Generates a concise summary of the selected document's content.</li>
+                <li><strong>Create MCQs</strong>: Creates multiple-choice questions based on the text to help you test your knowledge.</li>
+                <li><strong>Key Points</strong>: Extracts the most important points and facts into a clean list.</li>
+                <li><strong>Query Limits</strong>: Your daily AI query limit is shown above the AI action buttons. This resets every 24 hours.</li>
+            </ul>
+
+            <h5>5. Important Notes</h5>
+            <ul>
+                <li><strong>Privacy</strong>: All file processing and text extraction happens on your own device. Your files are never uploaded to a server. Only the extracted text is sent to the AI when you request an action.</li>
+                <li><strong>Data Storage</strong>: Your library and access key are saved in your browser's local storage. Clearing your browser data will also clear your library.</li>
+            </ul>
+        `;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- This is a huge script, so we'll modularize it with functions. ---
+            
+            // --- SECTION: App Constants & Configuration ---
+            const APP_CONFIG = {
+                STORAGE_KEYS: {
+                    mainState: 'smartStudyAppState_v3',
+                    adminConfig: 'smartStudyAdminConfig_v3'
+                },
+                ADMIN_PASSWORD: "CHANGE_ME", // IMPORTANT: This should be changed by the developer!
+                DEFAULT_ADMIN_CONFIG: {
+                    tiers: [
+                        { id: 'free', name: 'Free', maxFiles: 5, aiQueriesPerDay: 10 },
+                        { id: 'premium', name: 'Premium', maxFiles: 100, aiQueriesPerDay: 200 }
+                    ],
+                    keys: []
+                }
+            };
+            
+            // --- SECTION: State Management ---
+            let state = {
+                accessKey: null,
+                userTier: null,
+                library: [],
+                aiUsage: { date: new Date().toISOString().slice(0, 10), count: 0 },
+                selectedDocId: null,
+                theme: 'dark'
+            };
+            let adminConfig = {};
+            let adminLoggedIn = false;
+            
+            // --- SECTION: DOM Element Selectors ---
+            const $ = (selector) => document.querySelector(selector);
+            const $$ = (selector) => document.querySelectorAll(selector);
+
+            // --- A utility function to show/hide modals with animation
+            function toggleModal(modal, show) {
+                const modalContent = modal.querySelector('div');
+                if (show) {
+                    modal.classList.remove('hidden');
+                    setTimeout(() => {
+                        modalContent.classList.remove('scale-95', 'opacity-0');
+                    }, 10);
+                } else {
+                    modalContent.classList.add('scale-95', 'opacity-0');
+                    setTimeout(() => {
+                        modal.classList.add('hidden');
+                    }, 200);
+                }
+            }
+            
+            // --- The rest of the app logic will be inside the DOMContentLoaded listener.
+            // --- This keeps the global scope clean.
+            
+            initializeApp();
+        });
+    </script>
+</body>
+</html>
