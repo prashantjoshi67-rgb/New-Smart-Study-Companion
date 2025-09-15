@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Study Companion AI</title>
+    
+    <!-- Tailwind CSS for modern styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Poppins for a more modern feel -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Core Libraries: pdf.js, Tesseract.js (v5), JSZip -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        if (typeof pdfjsLib !== 'undefined') {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+    <style>
+        /* Custom styles to create a premium feel */
+        body { font-family: 'Poppins', sans-serif; }
+        .dark {
+            --bg-primary: #0d1117; /* GitHub Dark Dimmed */
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --border-color: #30363d;
+            --text-primary: #c9d1d9;
+            --text-secondary: #8b949e;
+            --accent: #58a6ff;
+            --accent-hover: #388bfd;
+            --danger: #f85149;
+            --danger-hover: #da3633;
+            --success: #3fb950;
+        }
+        .light {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f6f8fa;
+            --bg-tertiary: #e1e4e8;
+            --border-color: #d0d7de;
+            --text-primary: #24292f;
+            --text-secondary: #57606a;
+            --accent: #0969da;
+            --accent-hover: #0550ae;
+            --danger: #d73a49;
+            --danger-hover: #b02a37;
+            --success: #1a7f37;
+        }
+        .glass-pane {
+            background: rgba(255, 255, 255, 0.05);
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color);
+        }
+        .modal-bg {
+            background: rgba(13, 17, 23, 0.8);
+            -webkit-backdrop-filter: blur(8px);
+            backdrop-filter: blur(8px);
+        }
+        .action-btn {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+        .action-btn:hover:not(:disabled) { background-color: var(--accent); color: white; }
+        .action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .prose a { color: var(--accent); text-decoration: underline; }
+        .prose h4, .prose h5 { color: var(--text-primary); font-weight: 600; margin-top: 1em; margin-bottom: 0.5em;}
+        .prose p { margin-bottom: 1em; }
+        .prose ul { margin-left: 1.5em; list-style-type: disc; }
+        .prose li { margin-bottom: 0.5em; }
+        .prose strong { color: var(--text-primary); }
+        select {
+           background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%238b949e' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+           background-position: right 0.5rem center;
+           background-repeat: no-repeat;
+           background-size: 1.5em 1.5em;
+           padding-right: 2.5rem;
+           -webkit-appearance: none;
+           -moz-appearance: none;
+           appearance: none;
+        }
+    </style>
+</head>
+<body class="bg-bg-primary text-text-primary antialiased transition-colors duration-300">
+
+    <div id="app" class="relative min-h-screen">
+        <!-- Background Gradient Glow -->
+        <div class="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
+            <div class="absolute top-[-20%] left-[-20%] w-[60%] h-[60%] bg-accent/20 rounded-full filter blur-3xl animate-pulse opacity-30"></div>
+            <div class="absolute bottom-[-20%] right-[-20%] w-[50%] h-[50%] bg-danger/20 rounded-full filter blur-3xl animate-pulse opacity-20 animation-delay-4000"></div>
+        </div>
+
+        <div class="relative z-10 max-w-7xl mx-auto p-4 md:p-6 lg:p-8">
+            <!-- Header -->
+            <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+                <div>
+                    <h1 class="text-3xl md:text-4xl font-bold text-text-primary flex items-center gap-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-accent"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"></path></svg>
+                        Smart Study Companion
+                    </h1>
+                    <p id="app-status" class="text-sm text-text-secondary mt-1">Initializing...</p>
+                </div>
+                <div class="flex items-center gap-2 mt-4 md:mt-0">
+                    <button id="help-btn" class="p-2 rounded-md bg-bg-secondary/50 hover:bg-bg-tertiary transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-text-secondary"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                    </button>
+                    <button id="theme-toggle" class="p-2 rounded-md bg-bg-secondary/50 hover:bg-bg-tertiary transition-colors">
+                        <svg id="sun-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-text-secondary"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path></svg>
+                        <svg id="moon-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden text-text-secondary"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg>
+                    </button>
+                </div>
+            </header>
+
+            <main id="main-content" class="grid grid-cols-1 lg:grid-cols-2 gap-6 hidden">
+                <!-- Left Column -->
+                <div class="flex flex-col gap-6">
+                    <div class="glass-pane p-6 rounded-lg">
+                        <h2 class="text-xl font-semibold text-text-primary mb-4 flex justify-between items-center">
+                            <span>1. Load Your Material</span>
+                            <span id="file-limit-indicator" class="text-xs font-mono text-text-secondary"></span>
+                        </h2>
+                        <div id="upload-area" class="flex items-center justify-center w-full">
+                            <label for="file-input" class="flex flex-col items-center justify-center w-full h-40 border-2 border-border-color border-dashed rounded-lg cursor-pointer bg-bg-secondary hover:bg-bg-tertiary transition-colors">
+                                <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                    <svg class="w-8 h-8 mb-4 text-text-secondary" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/></svg>
+                                    <p class="mb-2 text-sm text-text-secondary"><span class="font-semibold">Click to upload</span> or drag & drop</p>
+                                    <p class="text-xs text-text-secondary">PDF, TXT, JPG, PNG, or ZIP</p>
+                                </div>
+                                <input id="file-input" type="file" class="hidden" multiple />
+                            </label>
+                        </div>
+                    </div>
+                    <div id="library-section" class="glass-pane p-6 rounded-lg">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-xl font-semibold text-text-primary">My Library</h2>
+                            <button id="delete-all-btn" class="text-sm font-medium text-danger hover:text-danger-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors" disabled>Delete All</button>
+                        </div>
+                        <div id="library-list" class="space-y-3 h-72 overflow-y-auto pr-2">
+                            <div id="library-placeholder" class="text-center text-text-secondary py-8">
+                                <p>Your uploaded documents will appear here.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Right Column -->
+                <div class="glass-pane p-6 rounded-lg">
+                    <h2 class="text-xl font-semibold text-text-primary mb-4 flex justify-between items-center">
+                        <span>2. AI Study Assistant</span>
+                        <span id="query-limit-indicator" class="text-xs font-mono text-text-secondary"></span>
+                    </h2>
+                    <div id="assistant-controls" class="flex flex-wrap gap-2 mb-4 border-b border-border-color pb-4">
+                        <button data-action="summarize" class="action-btn" disabled>Summarize</button>
+                        <button data-action="mcq" class="action-btn" disabled>Create MCQs</button>
+                        <button data-action="key-points" class="action-btn" disabled>Key Points</button>
+                    </div>
+                    <div id="ai-output-container" class="relative h-[28rem]">
+                        <div id="ai-output" class="prose prose-sm max-w-none h-full overflow-y-auto pr-2 text-text-secondary"></div>
+                         <div id="output-placeholder" class="absolute inset-0 flex flex-col items-center justify-center text-center text-text-secondary">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mb-4 text-gray-500"><path d="M12 8V4H8"></path><path d="M20 12V8h-4"></path><path d="M12 16v4h4"></path><path d="M4 12v4h4"></path><rect width="12" height="12" x="6" y="6" rx="1"></rect></svg>
+                            <p>Select a document and an AI action to begin.</p>
+                        </div>
+                        <div id="loading-spinner" class="absolute inset-0 hidden flex-col items-center justify-center bg-bg-secondary/50 rounded-b-lg">
+                             <svg class="animate-spin h-8 w-8 text-accent" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                            <p id="loading-status" class="mt-4 text-text-primary">AI is thinking...</p>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <!-- All Modals -->
+    <div id="access-key-modal" class="fixed inset-0 modal-bg flex items-center justify-center p-4 z-50">
+        <div class="bg-bg-secondary rounded-lg shadow-2xl p-6 w-full max-w-sm">
+            <h2 class="text-xl font-semibold text-text-primary text-center mb-4">Enter Access Key</h2>
+            <p class="text-text-secondary text-center text-sm mb-6">You need a valid access key to use the application.</p>
+            <input type="text" id="access-key-input" class="w-full bg-bg-primary border border-border-color rounded-md px-3 py-2 text-text-primary focus:ring-2 focus:ring-accent focus:outline-none placeholder-text-secondary" placeholder="xxxx-xxxx-xxxx-xxxx">
+            <button id="submit-access-key-btn" class="w-full mt-4 bg-accent text-white font-semibold px-4 py-2 rounded-md hover:bg-accent-hover transition-colors">Unlock</button>
+        </div>
+    </div>
+    <div id="api-key-modal" class="fixed inset-0 modal-bg flex-col items-center justify-center p-4 z-50 hidden">
+         <div class="bg-bg-secondary rounded-lg shadow-2xl p-6 w-full max-w-md">
+            <h2 class="text-xl font-semibold text-text-primary text-center mb-4">Enter Google AI API Key</h2>
+            <p class="text-text-secondary text-center text-sm mb-6">To use AI features, please provide your Google AI API key. This is stored only in your browser.</p>
+            <input type="password" id="api-key-input" class="w-full bg-bg-primary border border-border-color rounded-md px-3 py-2 text-text-primary focus:ring-2 focus:ring-accent focus:outline-none" placeholder="Enter your API key">
+            <p class="text-xs text-text-secondary mt-2 text-center">Get your key from <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-accent underline">Google AI Studio</a>.</p>
+            <div class="flex gap-2 mt-4">
+                <button id="cancel-api-key-btn" class="w-full bg-bg-tertiary text-text-primary font-semibold px-4 py-2 rounded-md hover:bg-border-color transition-colors">Cancel</button>
+                <button id="save-api-key-btn" class="w-full bg-accent text-white font-semibold px-4 py-2 rounded-md hover:bg-accent-hover transition-colors">Save and Continue</button>
+            </div>
+        </div>
+    </div>
+    <div id="admin-login-modal" class="fixed inset-0 modal-bg items-center justify-center p-4 z-50 hidden">
+        <div class="bg-bg-secondary rounded-lg shadow-2xl p-6 w-full max-w-sm">
+            <h2 class="text-xl font-semibold text-text-primary text-center mb-4">Admin Access</h2>
+            <input type="password" id="admin-password-input" class="w-full bg-bg-primary border border-border-color rounded-md px-3 py-2 text-text-primary focus:ring-2 focus:ring-accent focus:outline-none" placeholder="Password">
+            <button id="admin-login-btn" class="w-full mt-4 bg-danger text-white font-semibold px-4 py-2 rounded-md hover:bg-danger-hover transition-colors">Login</button>
+        </div>
+    </div>
+    <div id="admin-panel-modal" class="fixed inset-0 modal-bg items-center justify-center p-4 z-50 hidden">
+        <div class="bg-bg-secondary rounded-lg shadow-2xl p-6 w-full max-w-3xl max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center border-b border-border-color pb-3 mb-4 flex-shrink-0">
+                <h2 class="text-xl font-semibold text-text-primary">Admin Configuration</h2>
+                <button id="close-admin-panel-btn" class="p-1 rounded-full hover:bg-bg-tertiary text-2xl font-light">&times;</button>
+            </div>
+            <div class="flex-grow overflow-y-auto pr-2">
+                <h3 class="font-semibold mb-2 text-text-primary">Access Tiers</h3>
+                <div id="admin-tiers-list" class="space-y-2 mb-4"></div>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-2 p-3 border border-dashed border-border-color rounded-md bg-bg-primary/50">
+                    <input id="new-tier-name" placeholder="Tier Name" class="w-full bg-bg-secondary border border-border-color rounded-md p-2 text-sm text-text-primary focus:ring-2 focus:ring-accent focus:outline-none placeholder:text-text-secondary">
+                    <input id="new-tier-files" type="number" placeholder="Max Files" class="w-full bg-bg-secondary border border-border-color rounded-md p-2 text-sm text-text-primary focus:ring-2 focus:ring-accent focus:outline-none placeholder:text-text-secondary">
+                    <input id="new-tier-queries" type="number" placeholder="AI Queries/Day" class="w-full bg-bg-secondary border border-border-color rounded-md p-2 text-sm text-text-primary focus:ring-2 focus:ring-accent focus:outline-none placeholder:text-text-secondary">
+                    <button id="add-tier-btn" class="bg-accent text-white font-semibold p-2 text-sm rounded-md hover:bg-accent-hover transition-colors">Add Tier</button>
+                </div>
+                <h3 class="font-semibold mt-6 mb-2 text-text-primary">Access Keys</h3>
+                <div id="admin-keys-list" class="space-y-1 mb-4 h-48 overflow-y-auto border border-border-color rounded-md p-2 bg-bg-primary/50"></div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-2 p-3 border border-dashed border-border-color rounded-md bg-bg-primary/50">
+                    <input id="new-key-note" placeholder="Note (e.g., 'John Doe Premium')" class="w-full bg-bg-secondary border border-border-color rounded-md p-2 text-sm text-text-primary focus:ring-2 focus:ring-accent focus:outline-none placeholder:text-text-secondary">
+                    <select id="new-key-tier" class="w-full bg-bg-secondary border border-border-color rounded-md p-2 text-sm text-text-primary focus:ring-2 focus:ring-accent focus:outline-none"></select>
+                    <button id="add-key-btn" class="bg-accent text-white font-semibold text-sm p-2 rounded-md hover:bg-accent-hover transition-colors">Generate New Key</button>
+                </div>
+            </div>
+             <div class="flex justify-end mt-6 flex-shrink-0">
+                <button id="save-admin-config-btn" class="bg-success text-white font-semibold px-4 py-2 rounded-md hover:opacity-80 transition-opacity">Save & Close</button>
+            </div>
+        </div>
+    </div>
+    <div id="user-manual-modal" class="fixed inset-0 modal-bg items-center justify-center p-4 z-50 hidden">
+        <div class="bg-bg-secondary rounded-lg shadow-2xl p-6 w-full max-w-3xl max-h-[90vh] flex flex-col">
+             <div class="flex justify-between items-center border-b border-border-color pb-3 mb-4 flex-shrink-0">
+                <h2 class="text-xl font-semibold text-text-primary">User Manual</h2>
+                <button id="close-user-manual-btn" class="p-1 rounded-full hover:bg-bg-tertiary text-2xl font-light">&times;</button>
+            </div>
+            <div id="user-manual-content" class="prose prose-sm max-w-none text-text-secondary flex-grow overflow-y-auto pr-2"></div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-success text-white py-2 px-4 rounded-lg shadow-lg opacity-0 transform translate-y-5 transition-all duration-300 z-[100]"></div>
+
+    <script>
+        // Version 11.0 - Final Stable Build
+        const USER_MANUAL_HTML = `<h4>Welcome to Smart Study Companion!</h4><p>This guide will help you get started with turning your study materials into powerful learning tools.</p><h5>1. Getting Started: Access Key</h5><p>The first thing you see is a prompt for an <strong>Access Key</strong>. This key unlocks the app's features based on your plan. Enter the key provided to you and click "Unlock" to begin.</p><h5>2. Loading Your Study Materials</h5><ul><li><strong>Upload Files</strong>: Drag and drop your files (PDF, TXT, JPG, PNG) into the upload box on the left, or click it to select files from your device.</li><li><strong>ZIP Archives</strong>: You can upload a .zip file containing multiple documents, and the app will automatically unpack them.</li><li><strong>File Limits</strong>: Your current plan's file limit is shown above the upload box.</li></ul><h5>3. Managing Your Library</h5><ul><li>Your uploaded documents appear in the "My Library" list.</li><li><strong>Select a Document</strong>: Click on a document to select it. It will be highlighted, making it the active document for the AI Assistant.</li><li><strong>Delete Documents</strong>: Click the trash icon next to a file to delete it individually, or use the "Delete All" button to clear your library.</li></ul><h5>4. Using the AI Study Assistant</h5><p>Once you've selected a document, the AI Assistant buttons become active.</p><ul><li><strong>First Time Use</strong>: The first time you click an AI button, the app will ask for a <strong>Google AI API Key</strong>. You can get a free one from Google AI Studio. The app will save it in your browser so you only need to enter it once.</li><li><strong>Summarize</strong>: Generates a concise summary of the selected document's content.</li><li><strong>Create MCQs</strong>: Creates multiple-choice questions based on the text to help you test your knowledge.</li><li><strong>Key Points</strong>: Extracts the most important points and facts into a clean list.</li><li><strong>Query Limits</strong>: Your daily AI query limit is shown above the AI action buttons. This resets every 24 hours.</li></ul><h5>5. Important Notes</h5><ul><li><strong>Privacy</strong>: All file processing and text extraction happens on your own device. Your files are never uploaded to a server. Only the extracted text is sent to the AI when you request an action.</li><li><strong>Data Storage</strong>: Your library and access key are saved in your browser's local storage. Clearing your browser data will also clear your library.</li></ul>`;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const APP_CONFIG = {
+                STORAGE_KEYS: {
+                    mainState: 'smartStudyAppState_v11',
+                    adminConfig: 'smartStudyAdminConfig_v11'
+                },
+                ADMIN_PASSWORD: "CHANGE_ME",
+                ADMIN_TRIGGER_KEY: "admin_panel",
+                GEMINI_MODEL: "gemini-1.5-flash-latest",
+                DEFAULT_ADMIN_CONFIG: {
+                    tiers: [
+                        { id: 'free', name: 'Free', maxFiles: 5, aiQueriesPerDay: 10 },
+                        { id: 'premium', name: 'Premium', maxFiles: 100, aiQueriesPerDay: 200 }
+                    ],
+                    keys: []
+                }
+            };
+
+            let state = {};
+            let adminConfig = {};
+            let adminLoggedIn = false;
+            let pendingAiAction = null;
+            let tesseractWorker = null;
+            
+            const $ = (selector) => document.querySelector(selector);
+            
+            // --- App Initialization ---
+            async function initializeApp() {
+                try {
+                    loadAdminConfig();
+                    loadState();
+                    applyTheme(state.theme);
+                    bindEventListeners();
+                    $('#user-manual-content').innerHTML = USER_MANUAL_HTML;
+
+                    if (state.accessKey && validateAccessKey(state.accessKey)) {
+                        unlockApp();
+                    } else {
+                        setStatus('Ready. Please enter your access key to begin.');
+                        toggleModal($('#access-key-modal'), true);
+                    }
+                    await initializeTesseractWorker();
+                } catch (error) {
+                    console.error("Initialization failed:", error);
+                    setStatus('Fatal error during startup. Check console.');
+                    showToast(`Initialization failed: ${error.message}`, 'error');
+                }
+            }
+
+            async function initializeTesseractWorker() {
+                try {
+                    setStatus('Initializing AI vision...');
+                    tesseractWorker = await Tesseract.createWorker('eng', 1, {
+                        logger: m => {
+                            if (m.status === 'recognizing text') {
+                                setStatus(`OCR Progress: ${Math.round(m.progress * 100)}%`);
+                            }
+                        }
+                    });
+                    const currentStatus = $('#app-status').textContent;
+                    if (currentStatus.includes('Initializing')) {
+                         setStatus(state.userTier ? `Ready. Tier: ${state.userTier.name}` : 'Ready.');
+                    }
+                } catch (error) {
+                    console.error('Tesseract worker initialization failed:', error);
+                    showToast('Could not initialize OCR service.', 'error');
+                    setStatus('OCR Failed to Load.');
+                }
+            }
+
+            // --- State & Config Management ---
+            function loadState() {
+                const savedState = localStorage.getItem(APP_CONFIG.STORAGE_KEYS.mainState);
+                const defaultState = {
+                    accessKey: null, googleAiApiKey: null, userTier: null, library: [],
+                    aiUsage: { date: new Date().toISOString().slice(0, 10), count: 0 },
+                    selectedDocId: null, theme: 'dark'
+                };
+                state = savedState ? { ...defaultState, ...JSON.parse(savedState) } : { ...defaultState };
+                
+                const today = new Date().toISOString().slice(0, 10);
+                if(state.aiUsage.date !== today) {
+                    state.aiUsage = { date: today, count: 0 };
+                    saveState();
+                }
+            }
+            function saveState() { localStorage.setItem(APP_CONFIG.STORAGE_KEYS.mainState, JSON.stringify(state)); }
+            function loadAdminConfig() {
+                const savedConfig = localStorage.getItem(APP_CONFIG.STORAGE_KEYS.adminConfig);
+                adminConfig = savedConfig ? JSON.parse(savedConfig) : { ...APP_CONFIG.DEFAULT_ADMIN_CONFIG };
+            }
+            function saveAdminConfig() { localStorage.setItem(APP_CONFIG.STORAGE_KEYS.adminConfig, JSON.stringify(adminConfig)); }
+
+            // --- Event Listeners ---
+            function bindEventListeners() {
+                $('#submit-access-key-btn').addEventListener('click', handleAccessKeySubmit);
+                $('#save-api-key-btn').addEventListener('click', handleSaveApiKey);
+                $('#cancel-api-key-btn').addEventListener('click', () => toggleModal($('#api-key-modal'), false));
+                $('#admin-login-btn').addEventListener('click', handleAdminLogin);
+                $('#theme-toggle').addEventListener('click', toggleTheme);
+                $('#help-btn').addEventListener('click', () => toggleModal($('#user-manual-modal'), true));
+                $('#close-user-manual-btn').addEventListener('click', () => toggleModal($('#user-manual-modal'), false));
+                $('#file-input').addEventListener('change', (e) => handleFileUpload(e.target.files));
+                $('#delete-all-btn').addEventListener('click', confirmDeleteAll);
+                $('#assistant-controls').addEventListener('click', handleAssistantAction);
+                
+                const dropzone = $('#upload-area').querySelector('label');
+                ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(ev => dropzone.addEventListener(ev, e => { e.preventDefault(); e.stopPropagation(); }));
+                ['dragenter', 'dragover'].forEach(ev => dropzone.addEventListener(ev, () => dropzone.classList.add('border-accent')));
+                ['dragleave', 'drop'].forEach(ev => dropzone.addEventListener(ev, () => dropzone.classList.remove('border-accent')));
+                dropzone.addEventListener('drop', e => handleFileUpload(e.dataTransfer.files));
+                
+                $('#close-admin-panel-btn').addEventListener('click', () => toggleModal($('#admin-panel-modal'), false));
+                $('#add-tier-btn').addEventListener('click', addAdminTier);
+                $('#add-key-btn').addEventListener('click', addAdminKey);
+                $('#save-admin-config-btn').addEventListener('click', () => {
+                    saveAdminConfig();
+                    if(state.accessKey) validateAccessKey(state.accessKey);
+                    if(state.userTier) unlockApp();
+                    toggleModal($('#admin-panel-modal'), false);
+                    showToast('Admin configuration saved!', 'success');
+                });
+            }
+            
+            // --- Core App Flow ---
+            function unlockApp() {
+                $('#main-content').classList.remove('hidden');
+                toggleModal($('#access-key-modal'), false);
+                setStatus(`Tier: ${state.userTier.name}`);
+                renderUIForTier();
+                renderLibrary();
+            }
+
+            function handleAccessKeySubmit() {
+                const keyInput = $('#access-key-input');
+                const key = keyInput.value.trim();
+                if (key.toLowerCase() === APP_CONFIG.ADMIN_TRIGGER_KEY) {
+                    keyInput.value = '';
+                    handleAdminTrigger();
+                    return;
+                }
+                if (validateAccessKey(key)) {
+                    state.accessKey = key;
+                    saveState();
+                    unlockApp();
+                    showToast('Access Granted!', 'success');
+                } else {
+                    showToast('Invalid Access Key.', 'error');
+                }
+            }
+
+            function handleSaveApiKey() {
+                const key = $('#api-key-input').value.trim();
+                if (key) {
+                    state.googleAiApiKey = key;
+                    saveState();
+                    toggleModal($('#api-key-modal'), false);
+                    showToast('API Key saved!', 'success');
+                    if (pendingAiAction) {
+                        const actionToRun = pendingAiAction;
+                        pendingAiAction = null;
+                        actionToRun();
+                    }
+                } else {
+                    showToast('Please enter a valid API key.', 'error');
+                }
+            }
+
+            function validateAccessKey(key) {
+                const foundKey = adminConfig.keys.find(k => k.key === key);
+                if (!foundKey) return false;
+                state.userTier = adminConfig.tiers.find(t => t.id === foundKey.tierId);
+                return !!state.userTier;
+            }
+            
+            // --- File Processing & Library ---
+            async function handleFileUpload(files) {
+                if (!files || files.length === 0) return;
+                const uploadQueue = Array.from(files);
+                if (state.library.length + uploadQueue.length > state.userTier.maxFiles) {
+                    showToast(`Cannot upload. File limit of ${state.userTier.maxFiles} would be exceeded.`, 'error');
+                    return;
+                }
+                for (const file of uploadQueue) {
+                    await processFile(file);
+                }
+                setStatus(`Ready. Tier: ${state.userTier.name}`);
+                $('#file-input').value = '';
+            }
+
+            async function processFile(file) {
+                 setStatus(`Processing ${file.name}...`);
+                 try {
+                    if (file.type === 'application/pdf') await processPdf(file);
+                    else if (file.type.startsWith('image/')) await processImage(file);
+                    else if (file.type === 'text/plain') await processText(file);
+                    else if (file.name.toLowerCase().endsWith('.zip')) await processZip(file);
+                    else showToast(`Unsupported file type: ${file.name}`, 'error');
+                } catch (error) {
+                    console.error(`Failed to process ${file.name}:`, error);
+                    showToast(`Error processing ${file.name}: ${error.message}`, 'error');
+                }
+            }
+
+            const processPdf = async file => {
+                const buffer = await file.arrayBuffer();
+                let text = await extractTextWithPdfJs(buffer);
+                let method = 'pdf.js';
+                if (!text || text.trim().length < 100) {
+                    setStatus(`PDF text low, trying OCR on ${file.name}...`);
+                    const ocrText = await extractTextWithTesseract(buffer);
+                    if (ocrText && ocrText.trim().length > text.trim().length) {
+                         text = ocrText; method = 'tesseract (ocr)';
+                    }
+                }
+                addDocumentToLibrary(file.name, file.type, text, { method });
+            };
+            const processImage = async file => addDocumentToLibrary(file.name, file.type, await extractTextWithTesseract(file), { method: 'tesseract (ocr)' });
+            const processText = async file => addDocumentToLibrary(file.name, file.type, await file.text(), { method: 'text' });
+            const processZip = async file => {
+                 if(typeof JSZip === 'undefined') throw new Error('JSZip library not found.');
+                 setStatus(`Unpacking ZIP: ${file.name}...`);
+                 const zip = await JSZip.loadAsync(file);
+                 for (const filename in zip.files) {
+                     if (zip.files[filename].dir) continue;
+                     const entry = zip.files[filename];
+                     const blob = await entry.async('blob');
+                     const fileFromZip = new File([blob], filename, {type: blob.type});
+                     await processFile(fileFromZip);
+                 }
+            };
+            
+            function addDocumentToLibrary(name, type, text, meta) {
+                if (!text || !text.trim()) {
+                    showToast(`No text could be extracted from ${name}.`, 'error');
+                    return;
+                }
+                state.library.push({ id: generateUUID(), name, type, text: text.trim(), meta });
+                saveState();
+                renderLibrary();
+                renderUIForTier();
+                showToast(`Added ${name}`, 'success');
+            }
+
+            async function extractTextWithPdfJs(arrayBuffer) {
+                try {
+                    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                    let fullText = '';
+                    for (let i = 1; i <= pdf.numPages; i++) {
+                        const page = await pdf.getPage(i);
+                        const textContent = await page.getTextContent();
+                        fullText += textContent.items.map(item => item.str).join(' ') + '\n';
+                    }
+                    return fullText;
+                } catch(e) { throw new Error(`pdf.js failed: ${e.message}`); }
+            }
+            
+            async function extractTextWithTesseract(source) {
+                if (!tesseractWorker) {
+                    await initializeTesseractWorker(); // Attempt to re-initialize if it failed
+                    if(!tesseractWorker) throw new Error('Tesseract OCR service is not available.');
+                }
+                try {
+                    const { data: { text } } = await tesseractWorker.recognize(source);
+                    return text;
+                } catch(e) { throw new Error(`Tesseract OCR failed: ${e.message}`); }
+            }
+            
+            // --- AI Assistant ---
+            function handleAssistantAction(e) {
+                const button = e.target.closest('.action-btn');
+                if (!button || button.disabled) return;
+                
+                const runAction = async () => {
+                    if (state.aiUsage.count >= state.userTier.aiQueriesPerDay) {
+                        showToast('Daily AI query limit reached.', 'error');
+                        return;
+                    }
+
+                    state.aiUsage.count++;
+                    saveState();
+                    renderUIForTier();
+                    updateAssistantButtons();
+                    
+                    const action = button.dataset.action;
+                    const doc = state.library.find(d => d.id === state.selectedDocId);
+                    if (!doc) return showToast('Please select a document first.', 'error');
+                    
+                    let systemPrompt, userPrompt;
+                    const textSlice = doc.text.slice(0, 30000); // Increased slice for better context
+                    switch(action) {
+                        case 'summarize':
+                            systemPrompt = "You are an expert academic assistant. Provide a concise, clear, and well-structured summary of the provided text, focusing on the main ideas and key arguments.";
+                            userPrompt = `Please summarize the following text:\n\n---\n\n${textSlice}`;
+                            break;
+                        case 'mcq':
+                            systemPrompt = "You are a quiz generation expert. Create 5 challenging multiple-choice questions (MCQs) based on the text. Each question must have 4 options (A, B, C, D) and one correct answer. Provide a separate answer key at the end.";
+                            userPrompt = `Generate 5 MCQs from this text:\n\n---\n\n${textSlice}`;
+                            break;
+                        case 'key-points':
+                            systemPrompt = "You are an efficient study bot. Extract the top 5-7 most important key points from the provided text as a numbered list. Each point should be a single, impactful sentence.";
+                            userPrompt = `Extract the key points from this text:\n\n---\n\n${textSlice}`;
+                            break;
+                    }
+                    await callGeminiAPI(systemPrompt, userPrompt);
+                }
+
+                if (!state.googleAiApiKey) {
+                    pendingAiAction = runAction;
+                    toggleModal($('#api-key-modal'), true);
+                } else {
+                    runAction();
+                }
+            }
+            
+            async function callGeminiAPI(systemInstruction, userQuery) {
+                $('#loading-spinner').classList.remove('hidden');
+                $('#output-placeholder').style.display = 'none';
+                $('#ai-output').innerHTML = '';
+                setStatus('AI is thinking...');
+                
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${APP_CONFIG.GEMINI_MODEL}:generateContent?key=${state.googleAiApiKey}`;
+                const payload = { contents: [{ parts: [{ text: userQuery }] }], systemInstruction: { parts: [{ text: systemInstruction }] } };
+                
+                try {
+                    const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(`API Error ${response.status}: ${errorData.error?.message || 'Check API key & billing.'}`);
+                    }
+                    const result = await response.json();
+                    const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                    if (text) {
+                        $('#ai-output').innerHTML = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+                    } else {
+                        const blockReason = result.candidates?.[0]?.finishReason;
+                        throw new Error(`No content returned. Reason: ${blockReason || 'Unknown'}. The prompt may have been blocked for safety reasons.`);
+                    }
+                } catch (error) {
+                    console.error('Gemini API call failed:', error);
+                    $('#ai-output').innerHTML = `<p class="text-danger font-semibold">${error.message}</p>`;
+                    showToast(error.message, 'error');
+                } finally {
+                    $('#loading-spinner').classList.add('hidden');
+                    if(!$('#ai-output').innerHTML) $('#output-placeholder').style.display = 'flex';
+                    setStatus(`Ready. Tier: ${state.userTier.name}`);
+                }
+            }
+            
+            // --- UI Rendering & Utilities ---
+            function renderLibrary() {
+                const list = $('#library-list');
+                list.innerHTML = '';
+                if (state.library.length === 0) {
+                    $('#library-placeholder').style.display = 'block';
+                    $('#delete-all-btn').disabled = true;
+                } else {
+                    $('#library-placeholder').style.display = 'none';
+                    state.library.forEach(doc => list.appendChild(createDocElement(doc)));
+                    $('#delete-all-btn').disabled = false;
+                }
+                updateAssistantButtons();
+            }
+            function createDocElement(doc) {
+                const el = document.createElement('div');
+                el.className = `flex justify-between items-center p-3 bg-bg-primary rounded-md border-2 hover:border-accent/50 cursor-pointer transition-all ${state.selectedDocId === doc.id ? '!border-accent bg-accent/10' : 'border-transparent'}`;
+                el.dataset.id = doc.id;
+                const icon = doc.type.startsWith('image') ? '🖼️' : (doc.type === 'application/pdf' ? '📄' : '📝');
+                el.innerHTML = `<div class="flex items-center gap-3 overflow-hidden"><span class="text-xl">${icon}</span><div class="truncate"><p class="font-medium text-text-primary truncate">${doc.name}</p><p class="text-xs text-text-secondary">${doc.meta.method ? `Via ${doc.meta.method.toUpperCase()}` : ''}</p></div></div><button data-delete-id="${doc.id}" class="delete-doc-btn flex-shrink-0 p-1 rounded-full text-text-secondary hover:text-danger hover:bg-danger/20 transition-colors"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>`;
+                el.addEventListener('click', e => {
+                    if (e.target.closest('.delete-doc-btn')) { e.stopPropagation(); deleteDocument(doc.id); } 
+                    else { selectDocument(doc.id); }
+                });
+                return el;
+            }
+            function selectDocument(docId) {
+                state.selectedDocId = (state.selectedDocId === docId) ? null : docId;
+                renderLibrary();
+            }
+            function deleteDocument(docId) {
+                state.library = state.library.filter(doc => doc.id !== docId);
+                if(state.selectedDocId === docId) state.selectedDocId = null;
+                saveState();
+                renderLibrary();
+                renderUIForTier();
+                showToast('Document removed.');
+            }
+
+            function confirmDeleteAll() {
+                if (confirm('Are you sure you want to delete all documents? This cannot be undone.')) {
+                    state.library = [];
+                    state.selectedDocId = null;
+                    saveState();
+                    renderLibrary();
+                    renderUIForTier();
+                    showToast('Library cleared.', 'success');
+                }
+            }
+            function renderUIForTier() {
+                if (!state.userTier) return;
+                $('#file-limit-indicator').textContent = `${state.library.length}/${state.userTier.maxFiles} files`;
+                $('#query-limit-indicator').textContent = `${state.aiUsage.count}/${state.userTier.aiQueriesPerDay} AI queries today`;
+                
+                const fileInput = $('#file-input');
+                const uploadArea = $('#upload-area');
+                if (state.library.length >= state.userTier.maxFiles) {
+                    uploadArea.classList.add('opacity-50', 'cursor-not-allowed');
+                    fileInput.disabled = true;
+                } else {
+                    uploadArea.classList.remove('opacity-50', 'cursor-not-allowed');
+                    fileInput.disabled = false;
+                }
+            }
+            function updateAssistantButtons() {
+                if (!state.userTier) return;
+                const canQuery = state.aiUsage.count < state.userTier.aiQueriesPerDay;
+                const docSelected = !!state.selectedDocId;
+                document.querySelectorAll('.action-btn').forEach(btn => btn.disabled = !canQuery || !docSelected);
+            }
+            function toggleModal(modal, show) {
+                if (show) { modal.classList.remove('hidden'); modal.classList.add('flex');} 
+                else { modal.classList.add('hidden'); modal.classList.remove('flex'); }
+            }
+            function showToast(message, type = 'info') {
+                const toast = $('#toast');
+                toast.textContent = message;
+                toast.className = `fixed bottom-5 right-5 text-white py-2 px-4 rounded-lg shadow-lg transition-all duration-300 z-[100]`;
+                const colors = { success: 'bg-success', error: 'bg-danger', info: 'bg-accent' };
+                toast.classList.add(colors[type] || 'bg-accent', 'opacity-100', 'translate-y-0');
+                setTimeout(() => {
+                    toast.classList.remove('opacity-100', 'translate-y-0');
+                    toast.classList.add('opacity-0', 'translate-y-5');
+                } , 4000);
+            }
+            function setStatus(text) { 
+                $('#app-status').textContent = text; 
+                $('#loading-status').textContent = text; 
+            }
+            function toggleTheme() {
+                state.theme = state.theme === 'dark' ? 'light' : 'dark';
+                applyTheme(state.theme);
+                saveState();
+            }
+            function applyTheme(theme) {
+                const html = document.documentElement;
+                if (theme === 'light') {
+                    html.classList.remove('dark'); html.classList.add('light');
+                    $('#moon-icon').classList.remove('hidden'); $('#sun-icon').classList.add('hidden');
+                } else {
+                    html.classList.remove('light'); html.classList.add('dark');
+                    $('#sun-icon').classList.remove('hidden'); $('#moon-icon').classList.add('hidden');
+                }
+            }
+            const generateUUID = (apiKeyStyle = false) => {
+                const format = apiKeyStyle ? 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx' : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx';
+                return format.replace(/[xy]/g, c => {
+                    const r = Math.random() * 16 | 0;
+                    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+                    return v.toString(16);
+                });
+            };
+            
+            // --- Admin Panel Logic ---
+            function handleAdminTrigger() {
+                if (!adminLoggedIn) {
+                    $('#admin-password-input').value = '';
+                    toggleModal($('#admin-login-modal'), true);
+                } else {
+                    renderAdminPanel();
+                    toggleModal($('#admin-panel-modal'), true);
+                }
+            }
+            function handleAdminLogin() {
+                if ($('#admin-password-input').value === APP_CONFIG.ADMIN_PASSWORD) {
+                    adminLoggedIn = true;
+                    toggleModal($('#admin-login-modal'), false);
+                    renderAdminPanel();
+                    toggleModal($('#admin-panel-modal'), true);
+                    showToast('Admin access granted.', 'success');
+                } else {
+                    showToast('Incorrect admin password.', 'error');
+                }
+            }
+            function renderAdminPanel() {
+                const tiersList = $('#admin-tiers-list');
+                tiersList.innerHTML = '';
+                adminConfig.tiers.forEach(tier => tiersList.appendChild(createAdminTierElement(tier)));
+                const keysList = $('#admin-keys-list');
+                keysList.innerHTML = '';
+                adminConfig.keys.forEach(key => keysList.appendChild(createAdminKeyElement(key)));
+                const tierSelect = $('#new-key-tier');
+                tierSelect.innerHTML = adminConfig.tiers.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+            }
+            function createAdminTierElement(tier) {
+                const el = document.createElement('div');
+                el.className = 'grid grid-cols-4 gap-2 items-center text-sm p-2 bg-bg-primary rounded-md';
+                el.innerHTML = `<span>${tier.name}</span><span>${tier.maxFiles} files</span><span>${tier.aiQueriesPerDay} Q/day</span><button data-id="${tier.id}" class="justify-self-end text-danger text-xs p-1 hover:bg-danger/20 rounded-full">Delete</button>`;
+                el.querySelector('button').addEventListener('click', () => deleteAdminTier(tier.id));
+                return el;
+            }
+            function createAdminKeyElement(key) {
+                const el = document.createElement('div');
+                const tierName = adminConfig.tiers.find(t => t.id === key.tierId)?.name || 'Unknown';
+                el.className = 'grid grid-cols-4 gap-2 items-center text-xs p-1';
+                el.innerHTML = `<span class="truncate">${key.note}</span><span class="font-mono truncate">${key.key}</span><span>${tierName}</span><button data-id="${key.key}" class="justify-self-end text-danger text-xs p-1 hover:bg-danger/20 rounded-full">Delete</button>`;
+                el.querySelector('button').addEventListener('click', () => deleteAdminKey(key.key));
+                return el;
+            }
+            function addAdminTier() {
+                const name = $('#new-tier-name').value.trim();
+                const maxFiles = parseInt($('#new-tier-files').value);
+                const aiQueries = parseInt($('#new-tier-queries').value);
+                if (name && !isNaN(maxFiles) && !isNaN(aiQueries)) {
+                    if (adminConfig.tiers.find(t => t.name.toLowerCase() === name.toLowerCase())) {
+                        showToast('A tier with this name already exists.', 'error');
+                        return;
+                    }
+                    adminConfig.tiers.push({ id: name.toLowerCase().replace(/\s/g, '_'), name, maxFiles, aiQueriesPerDay: aiQueries });
+                    renderAdminPanel();
+                    $('#new-tier-name').value = '';
+                    $('#new-tier-files').value = '';
+                    $('#new-tier-queries').value = '';
+                } else showToast('Invalid tier details.', 'error');
+            }
+            function addAdminKey() {
+                const note = $('#new-key-note').value.trim();
+                const tierId = $('#new-key-tier').value;
+                if (note && tierId) {
+                    adminConfig.keys.push({ key: generateUUID(true), note, tierId });
+                    renderAdminPanel();
+                    $('#new-key-note').value = '';
+                } else showToast('Note and tier are required.', 'error');
+            }
+            function deleteAdminTier(tierId) {
+                if (adminConfig.keys.some(k => k.tierId === tierId)) { showToast('Cannot delete tier assigned to existing keys.', 'error'); return; }
+                adminConfig.tiers = adminConfig.tiers.filter(t => t.id !== tierId);
+                renderAdminPanel();
+            }
+            function deleteAdminKey(key) {
+                adminConfig.keys = adminConfig.keys.filter(k => k.key !== key);
+                renderAdminPanel();
+            }
+
+            // --- App Entry Point ---
+            initializeApp();
+        });
+    </script>
+</body>
+</html>
